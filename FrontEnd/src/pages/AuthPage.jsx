@@ -23,16 +23,20 @@ const AuthPage = () => {
     e.preventDefault();
 
     try {
-    if (isLogin) {
-      // Login Request
-      const response = await axios.post('http://localhost:3000/api/users/login', {
-        email: formData.email,
-        password: formData.password,
-      });
-      console.log('Login successful:', response.data);
-      alert('Login successful');
-      navigate('/'); // Redirect to the index page
-    } else {
+      if (isLogin) {
+        const response = await axios.post('http://localhost:3000/api/users/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+      
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+        console.log('Login successful:', response.data);
+        alert('Login successful');
+      
+        navigate('/');
+      } else {
       // Signup Request
       const response = await axios.post('http://localhost:3000/api/users', formData);
       console.log('Signup successful:', response.data);
