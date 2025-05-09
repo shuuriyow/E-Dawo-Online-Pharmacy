@@ -1,89 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCheck, FiSearch, FiCalendar } from 'react-icons/fi';
+import axios from 'axios';
+
+const initialFormData = {
+  name: '',
+  description: '',
+  createdAt: new Date().toISOString().split('T')[0],
+};
 
 const CategoryManagement = () => {
-  const [categories, setCategories] = useState([
-    { 
-      id: 1, 
-      name: 'Antibiotics', 
-      description: 'Medicines that inhibit bacterial growth', 
-      medicineCount: 42,
-      createdAt: '2023-05-15'
-    },
-    { 
-      id: 2, 
-      name: 'Pain Relief', 
-      description: 'Medications for pain management', 
-      medicineCount: 36,
-      createdAt: '2023-06-20'
-    }
-  ]);
-
+  const [categories, setCategories] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    createdAt: new Date().toISOString().split('T')[0] // Default to today's date
-  });
-
+  const [formData, setFormData] = useState(initialFormData);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const addCategory = () => {
-    if (formData.name.trim()) {
-      const newCategory = {
-        id: categories.length + 1,
-        name: formData.name,
-        description: formData.description,
-        medicineCount: 0,
-        createdAt: formData.createdAt
-      };
-      setCategories([newCategory, ...categories]);
-      setIsAdding(false);
-      setFormData({ 
-        name: '', 
-        description: '',
-        createdAt: new Date().toISOString().split('T')[0] 
-      });
+  // Fetch categories from the backend
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/categories');
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error.response?.data || error.message);
     }
   };
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Add a new category
+  const addCategory = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/api/categories', formData);
+      setCategories([response.data, ...categories]);
+      setIsAdding(false);
+      setFormData(initialFormData);
+    } catch (error) {
+      console.error('Error adding category:', error.response?.data || error.message);
+    }
+  };
+
+  // Start editing a category
   const startEditing = (category) => {
-    setEditingId(category.id);
+    setEditingId(category._id);
     setFormData({
       name: category.name,
       description: category.description,
-      createdAt: category.createdAt
+      createdAt: category.createdAt.split('T')[0],
     });
   };
 
-  const saveEdit = () => {
-    setCategories(categories.map(cat => 
-      cat.id === editingId ? { 
-        ...cat, 
-        name: formData.name,
-        description: formData.description,
-        createdAt: formData.createdAt
-      } : cat
-    ));
-    setEditingId(null);
-    setFormData({ 
-      name: '', 
-      description: '',
-      createdAt: new Date().toISOString().split('T')[0] 
-    });
+  // Save edited category
+  const saveEdit = async () => {
+    try {
+      const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
+      setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
+      setEditingId(null);
+      setFormData(initialFormData);
+    } catch (error) {
+      console.error('Error updating category:', error.response?.data || error.message);
+    }
   };
 
-  const deleteCategory = (id) => {
-    setCategories(categories.filter(cat => cat.id !== id));
+  // Delete a category
+  const deleteCategory = async (id) => {
+    // Show confirmation dialog
+    const confirmDelete = window.confirm('Are you sure you want to delete this category?');
+    if (!confirmDelete) return; // If the user cancels, do nothing
+    try {
+      await axios.delete(`http://localhost:3000/api/categories/${id}`);
+      setCategories(categories.filter((cat) => cat._id !== id));
+    } catch (error) {
+      console.error('Error deleting category:', error.response?.data || error.message);
+    }
   };
 
-  const filteredCategories = categories.filter(category =>
+  // Filter categories based on search term
+  const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     category.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -92,7 +92,7 @@ const CategoryManagement = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Category Management</h1>
-        <button 
+        <button
           onClick={() => setIsAdding(!isAdding)}
           className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
@@ -105,7 +105,13 @@ const CategoryManagement = () => {
       {isAdding && (
         <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Add New Category</h2>
-          <form onSubmit={(e) => { e.preventDefault(); addCategory(); }} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addCategory();
+            }}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
@@ -120,19 +126,14 @@ const CategoryManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created Date</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FiCalendar className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="date"
-                    name="createdAt"
-                    value={formData.createdAt}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
-                    required
-                  />
-                </div>
+                <input
+                  type="date"
+                  name="createdAt"
+                  value={formData.createdAt}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  required
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
@@ -180,7 +181,7 @@ const CategoryManagement = () => {
             />
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
             <thead className="bg-gray-50 dark:bg-gray-600">
@@ -193,10 +194,10 @@ const CategoryManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-              {filteredCategories.map(category => (
-                <tr key={category.id}>
+              {filteredCategories.map((category) => (
+                <tr key={category._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === category.id ? (
+                    {editingId === category._id ? (
                       <input
                         type="text"
                         name="name"
@@ -209,7 +210,7 @@ const CategoryManagement = () => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    {editingId === category.id ? (
+                    {editingId === category._id ? (
                       <textarea
                         name="description"
                         value={formData.description}
@@ -227,29 +228,24 @@ const CategoryManagement = () => {
                     {category.medicineCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {editingId === category.id ? (
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <FiCalendar className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <input
-                          type="date"
-                          name="createdAt"
-                          value={formData.createdAt}
-                          onChange={handleInputChange}
-                          className="w-full pl-8 px-2 py-1 border rounded-md dark:bg-gray-800"
-                        />
-                      </div>
+                    {editingId === category._id ? (
+                      <input
+                        type="date"
+                        name="createdAt"
+                        value={formData.createdAt}
+                        onChange={handleInputChange}
+                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-800"
+                      />
                     ) : (
                       <div className="flex items-center">
                         <FiCalendar className="flex-shrink-0 mr-2 text-gray-400" />
-                        {category.createdAt}
+                        {category.createdAt.split('T')[0]}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      {editingId === category.id ? (
+                      {editingId === category._id ? (
                         <>
                           <button
                             onClick={saveEdit}
@@ -273,7 +269,7 @@ const CategoryManagement = () => {
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => deleteCategory(category.id)}
+                            onClick={() => deleteCategory(category._id)}
                             className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-500"
                           >
                             <FiTrash2 className="w-5 h-5" />

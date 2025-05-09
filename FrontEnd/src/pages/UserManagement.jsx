@@ -1,52 +1,113 @@
 // pages/UserManagement.js
 import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiCalendar } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const UserManagement = () => {
   const [isAdding, setIsAdding] = useState(false);
+  const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     role: 'Pharmacy Manager',
     password: '',
     status: 'Active',
-    createdDate: new Date().toISOString().split('T')[0] // Sets default to current date
+    createdDate: new Date().toISOString().split('T')[0],
   });
+  const [editingId, setEditingId] = useState(null);
 
-  const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Pharmacy Manager', status: 'Active', createdDate: '2023-05-15' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Pharmacy Manager', status: 'Active', createdDate: '2023-06-20' },
-    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'Pharmacy Manager', status: 'Inactive', createdDate: '2023-07-10' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Pharmacy Manager', status: 'Active', createdDate: '2023-08-05' },
-    { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'Pharmacy Manager', status: 'Active', createdDate: '2023-09-12' },
-  ];
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser(prev => ({ ...prev, [name]: value }));
+    setNewUser((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add user logic here
-    console.log('New user:', newUser);
-    setIsAdding(false);
+    try {
+      if (editingId) {
+        // Update user
+        await axios.put(`http://localhost:3000/api/users/${editingId}`, newUser);
+        console.log('User updated successfully');
+      } else {
+        // Create new user
+        await axios.post('http://localhost:3000/api/users', newUser);
+        console.log('User created successfully');
+      }
+      setIsAdding(false);
+      setEditingId(null);
+      setNewUser({
+        name: '',
+        email: '',
+        role: 'Pharmacy Manager',
+        password: '',
+        status: 'Active',
+        createdDate: new Date().toISOString().split('T')[0],
+      });
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error saving user:', error.response?.data || error.message);
+    }
+  };
+
+  const handleEdit = (user) => {
     setNewUser({
-      name: '',
-      email: '',
-      role: 'Pharmacy Manager',
-      password: '',
-      status: 'Active',
-      createdDate: new Date().toISOString().split('T')[0]
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      password: '', // Don't pre-fill password for security
+      status: user.status,
+      createdDate: user.createdDate,
     });
+    setEditingId(user._id); // Set the editing ID
+    setIsAdding(true); // Open the form for editing
+  };
+
+  // function deleting with user 
+  const handleDelete = async (id) => {
+    // Show confirmation dialog
+    const confirmDelete = window.confirm('Are you sure you want to delete this user?');
+    if (!confirmDelete) return; // If the user cancels, do nothing
+
+    try {
+      // Send DELETE request to the backend
+      await axios.delete(`http://localhost:3000/api/users/${id}`);
+      console.log('User deleted successfully');
+      fetchUsers(); // Refresh the user list after deletion
+    } catch (error) {
+      console.error('Error deleting user:', error.response?.data || error.message);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">User Management</h1>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
+        <button
+          onClick={() => {
+            setIsAdding(!isAdding);
+            setEditingId(null);
+            setNewUser({
+              name: '',
+              email: '',
+              role: 'Pharmacy Manager',
+              password: '',
+              status: 'Active',
+              createdDate: new Date().toISOString().split('T')[0],
+            });
+          }}
           className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           <FiPlus className="w-5 h-5 mr-2" />
@@ -54,10 +115,11 @@ const UserManagement = () => {
         </button>
       </div>
 
-      {/* Add User Form */}
       {isAdding && (
         <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Add New User</h2>
+          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+            {editingId ? 'Edit User' : 'Add New User'}
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -93,6 +155,7 @@ const UserManagement = () => {
                   <option value="Pharmacy Manager">Pharmacy Manager</option>
                   <option value="Pharmacist">Pharmacist</option>
                   <option value="Cashier">Cashier</option>
+                  <option value="Admin">Admin</option>
                 </select>
               </div>
               <div>
@@ -136,9 +199,21 @@ const UserManagement = () => {
               </div>
             </div>
             <div className="flex justify-end space-x-3 pt-2">
-              <button
+
+              <button  // the form resets when the user cancels the editing process.
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingId(null);
+                  setNewUser({
+                    name: '',
+                    email: '',
+                    role: 'Pharmacy Manager',
+                    password: '',
+                    status: 'Active',
+                    createdDate: new Date().toISOString().split('T')[0],
+                  });
+                }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
@@ -147,7 +222,7 @@ const UserManagement = () => {
                 type="submit"
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Save User
+                {editingId ? 'Update User' : 'Save User'}
               </button>
             </div>
           </form>
@@ -167,7 +242,7 @@ const UserManagement = () => {
             />
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
             <thead className="bg-gray-50 dark:bg-gray-600">
@@ -182,11 +257,11 @@ const UserManagement = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
               {users.map((user) => (
-                <tr key={user.id}>
+                <tr key={user._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                        {user.name.charAt(0)}
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
@@ -196,22 +271,30 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.role}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${user.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                      {user.status}
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+            ${user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}
+                    >
+                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     <div className="flex items-center">
                       <FiCalendar className="mr-2 text-gray-400" />
-                      {user.createdDate}
+                      {new Date(user.createdDate).toISOString().split('T')[0]}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-500 mr-3">
+                    <button
+                      onClick={() => handleEdit(user)} // Call handleEdit when clicked
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-500 mr-3"
+                    >
                       <FiEdit2 className="w-5 h-5" />
                     </button>
-                    <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-500">
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-500"
+                    >
                       <FiTrash2 className="w-5 h-5" />
                     </button>
                   </td>
@@ -220,7 +303,7 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
-        
+
         <div className="bg-gray-50 dark:bg-gray-600 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-500 sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">
             <a href="#" className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">

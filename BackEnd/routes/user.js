@@ -1,11 +1,12 @@
 const express = require('express');
+const { createUser, loginUser, getAllUsers, updateUser, deleteUser } = require('../controllers/user');
+
 const router = express.Router();
-const { createUser, loginUser } = require('../controllers/user');
 
-// POST /api/users - Signup
 router.post('/', createUser);
-
-// POST /api/users/login - Login
 router.post('/login', loginUser);
+router.get('/', getAllUsers);
+router.put('/:id', updateUser); // Fixed PUT route with parameter
+router.delete('/:id', deleteUser); // Add DELETE route
 
 module.exports = router;
