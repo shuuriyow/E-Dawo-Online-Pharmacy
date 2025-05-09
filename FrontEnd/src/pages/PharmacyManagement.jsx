@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiCheck, FiX, FiEye, FiTrash2 ,FiEdit2, FiPlus, FiClock, FiPhone, FiUser, FiSearch, FiImage } from 'react-icons/fi';
+import { FiCheck, FiX, FiEye, FiTrash2, FiEdit2, FiPlus, FiClock, FiPhone, FiUser, FiSearch, FiImage } from 'react-icons/fi';
 import axios from 'axios';
 
 const initialFormData = {
@@ -16,6 +16,7 @@ const PharmacyManagement = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
   const [pharmacies, setPharmacies] = useState([]); // Start with an empty array
+  const [searchTerm, setSearchTerm] = useState('');
 
   // ⬅ Move this to the top level, not inside useEffect
   const fetchPharmacies = async () => {
@@ -114,6 +115,14 @@ const PharmacyManagement = () => {
       console.error('Error rejecting pharmacy:', error.response?.data || error.message);
     }
   };
+
+  const filteredPharmacies = pharmacies.filter((pharmacy) =>
+    pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pharmacy.license.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pharmacy.manager.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pharmacy.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pharmacy.address.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -253,6 +262,8 @@ const PharmacyManagement = () => {
             </div>
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300 border rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
               placeholder="Search pharmacies..."
             />
@@ -274,7 +285,7 @@ const PharmacyManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-              {pharmacies.map((pharmacy) => (
+              {filteredPharmacies.map((pharmacy) => (
                 <tr key={pharmacy._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
