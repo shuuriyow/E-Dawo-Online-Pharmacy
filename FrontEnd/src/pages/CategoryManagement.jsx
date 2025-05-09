@@ -36,38 +36,57 @@ const CategoryManagement = () => {
   };
 
   // Add a new category
-  const addCategory = async () => {
+  // const addCategory = async () => {
+  //   try {
+  //     const response = await axios.post('http://localhost:3000/api/categories', formData);
+  //     setCategories([response.data, ...categories]);
+  //     setIsAdding(false);
+  //     setFormData(initialFormData);
+  //   } catch (error) {
+  //     console.error('Error adding category:', error.response?.data || error.message);
+  //   }
+  // };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/categories', formData);
-      setCategories([response.data, ...categories]);
-      setIsAdding(false);
-      setFormData(initialFormData);
+      if (editingId) {
+        // Update existing category
+        const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
+        setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
+      } else {
+        // Add new category
+        const response = await axios.post('http://localhost:3000/api/categories', formData);
+        setCategories([response.data, ...categories]);
+      }
+      setFormData(initialFormData); // Reset the form
+      setEditingId(null); // Clear the editing ID
+      setIsAdding(false); // Hide the form
     } catch (error) {
-      console.error('Error adding category:', error.response?.data || error.message);
+      console.error('Error saving category:', error.response?.data || error.message);
     }
   };
 
-  // Start editing a category
   const startEditing = (category) => {
-    setEditingId(category._id);
+    setEditingId(category._id); // Set the ID of the category being edited
     setFormData({
       name: category.name,
       description: category.description,
       createdAt: category.createdAt.split('T')[0],
     });
+    setIsAdding(true); // Show the form
   };
 
   // Save edited category
-  const saveEdit = async () => {
-    try {
-      const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
-      setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
-      setEditingId(null);
-      setFormData(initialFormData);
-    } catch (error) {
-      console.error('Error updating category:', error.response?.data || error.message);
-    }
-  };
+  // const saveEdit = async () => {
+  //   try {
+  //     const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
+  //     setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
+  //     setEditingId(null);
+  //     setFormData(initialFormData);
+  //   } catch (error) {
+  //     console.error('Error updating category:', error.response?.data || error.message);
+  //   }
+  // };
 
   // Delete a category
   const deleteCategory = async (id) => {
@@ -104,14 +123,10 @@ const CategoryManagement = () => {
       {/* Add Category Form */}
       {isAdding && (
         <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Add New Category</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addCategory();
-            }}
-            className="space-y-4"
-          >
+          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+            {editingId ? 'Edit Category' : 'Add New Category'}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
@@ -149,7 +164,11 @@ const CategoryManagement = () => {
             <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingId(null);
+                  setFormData(initialFormData);
+                }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
@@ -158,13 +177,12 @@ const CategoryManagement = () => {
                 type="submit"
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Save Category
+                {editingId ? 'Update Category' : 'Save Category'}
               </button>
             </div>
           </form>
         </div>
       )}
-
       {/* Categories Table */}
       <div className="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b border-gray-200 dark:border-gray-600">
@@ -248,13 +266,16 @@ const CategoryManagement = () => {
                       {editingId === category._id ? (
                         <>
                           <button
-                            onClick={saveEdit}
+                            onClick={handleSubmit}
                             className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-500"
                           >
                             <FiCheck className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => setEditingId(null)}
+                            onClick={() => {
+                              setEditingId(null);
+                              setFormData(initialFormData);
+                            }}
                             className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-500"
                           >
                             <FiX className="w-5 h-5" />
