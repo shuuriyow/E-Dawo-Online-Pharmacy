@@ -1,96 +1,142 @@
-import { useState } from 'react';
-import { FiPlus, FiMinus, FiTag, FiX, FiCheck, FiSearch, FiCalendar, FiPackage, FiEdit2,FiTrash2  } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
+import axios from 'axios';
+
+const initialFormData = {
+  name: '',
+  category: '',
+  batchId: '',
+  expiryDate: '',
+  stock: 0,
+  price: 0,
+  discount: '',
+  pharmacy: '',
+};
 
 const MedicineOverview = () => {
-  const [medicines, setMedicines] = useState([
-    { id: 1, name: 'Paracetamol', category: 'Pain Relief', batch: 'BATCH001', expiry: '2024-12-31', stock: 142, price: 5.99, discount: 0 },
-    { id: 2, name: 'Amoxicillin', category: 'Antibiotics', batch: 'BATCH002', expiry: '2024-10-15', stock: 87, price: 12.50, discount: 10 }
-  ]);
-
+  const [medicines, setMedicines] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [pharmacies, setPharmacies] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [filter, setFilter] = useState('all');
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    batch: '',
-    expiry: '',
-    stock: 0,
-    price: 0,
-    discount: 0
-  });
+  const [formData, setFormData] = useState(initialFormData);
+  const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const updateStock = (id, amount) => {
-    setMedicines(medicines.map(med =>
-      med.id === id ? { ...med, stock: Math.max(0, med.stock + amount) } : med
-    ));
-  };
-
-  const updateDiscount = (id, value) => {
-    setMedicines(medicines.map(med =>
-      med.id === id ? { ...med, discount: Math.max(0, Math.min(100, value)) } : med
-    ));
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const addMedicine = () => {
-    if (formData.name.trim() && formData.category.trim()) {
-      const newMedicine = {
-        id: medicines.length + 1,
-        ...formData,
-        stock: parseInt(formData.stock),
-        price: parseFloat(formData.price),
-        discount: parseInt(formData.discount)
-      };
-      setMedicines([newMedicine, ...medicines]);
-      setIsAdding(false);
-      setFormData({
-        name: '',
-        category: '',
-        batch: '',
-        expiry: '',
-        stock: 0,
-        price: 0,
-        discount: 0
-      });
+  // Fetch medicines, categories, and pharmacies
+  const fetchData = async () => {
+    try {
+      const [medicineRes, categoryRes, pharmacyRes, discountRes] = await Promise.all([
+        axios.get('http://localhost:3000/api/medicines'),
+        axios.get('http://localhost:3000/api/categories'),
+        axios.get('http://localhost:3000/api/pharmacies'),
+        axios.get('http://localhost:3000/api/discounts'), // Fetch discounts
+      ]);
+      setMedicines(medicineRes.data);
+      setCategories(categoryRes.data);
+      setPharmacies(pharmacyRes.data);
+      setDiscounts(discountRes.data); // Save discounts in state
+    } catch (error) {
+      console.error('Error fetching data:', error.response?.data || error.message);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle form submission for adding or editing a medicine
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const dataToSubmit = {
+        ...formData,
+        category: formData.category || null,
+        discount: formData.discount || null,
+        pharmacy: formData.pharmacy || null,
+      };
+
+      if (editingId) {
+        const response = await axios.put(`http://localhost:3000/api/medicines/${editingId}`, dataToSubmit);
+        setMedicines(medicines.map((med) => (med._id === editingId ? response.data : med)));
+      } else {
+        const response = await axios.post('http://localhost:3000/api/medicines', dataToSubmit);
+        setMedicines([response.data, ...medicines]);
+      }
+      setFormData(initialFormData);
+      setEditingId(null);
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error saving medicine:', error.response?.data || error.message);
+    }
+  };
+
+
+  // Start editing a medicine
+  const startEditing = (medicine) => {
+    setEditingId(medicine._id);
+    setFormData({
+      name: medicine.name,
+      category: medicine.category?._id || '',
+      batchId: medicine.batchId,
+      expiryDate: medicine.expiryDate.split('T')[0],
+      stock: medicine.stock,
+      price: medicine.price,
+      discount: medicine.discount,
+      pharmacy: medicine.pharmacy?._id || '',
+    });
+    setIsAdding(true);
+  };
+
+  // Delete a medicine
+  const deleteMedicine = async (id) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this medicine?');
+    if (!confirmDelete) return;
+    try {
+      await axios.delete(`http://localhost:3000/api/medicines/${id}`);
+      setMedicines(medicines.filter((med) => med._id !== id));
+    } catch (error) {
+      console.error('Error deleting medicine:', error.response?.data || error.message);
+    }
+  };
+
+  // Filter medicines based on search term
+  const filteredMedicines = medicines.filter((medicine) =>
+    medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    medicine.category?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    medicine.batchId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Medicine Overview</h1>
         <button
-          onClick={() => setIsAdding(true)}
+          onClick={() => {
+            setIsAdding(!isAdding);
+            setEditingId(null);
+            setFormData(initialFormData);
+          }}
           className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           <FiPlus className="w-5 h-5 mr-2" />
-          Add Medicine
+          {isAdding ? 'Cancel' : 'Add Medicine'}
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* ... (keep your existing stats cards) ... */}
-      </div>
-
-      {/* Add Medicine Modal */}
+      {/* Add/Edit Medicine Form */}
       {isAdding && (
-        <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-800 dark:text-white">Add New Medicine</h2>
-            <button
-              onClick={() => setIsAdding(false)}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
-            >
-              <FiX className="w-6 h-6" />
-            </button>
-          </div>
-
-          <form onSubmit={(e) => { e.preventDefault(); addMedicine(); }} className="space-y-4">
+        <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
+            {editingId ? 'Edit Medicine' : 'Add New Medicine'}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medicine Name</label>
@@ -110,21 +156,23 @@ const MedicineOverview = () => {
                   value={formData.category}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+
                   required
                 >
                   <option value="">Select Category</option>
-                  <option value="Pain Relief">Pain Relief</option>
-                  <option value="Antibiotics">Antibiotics</option>
-                  <option value="Antihistamines">Antihistamines</option>
-                  <option value="Vitamins">Vitamins</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batch Number</label>
                 <input
                   type="text"
-                  name="batch"
-                  value={formData.batch}
+                  name="batchId"
+                  value={formData.batchId}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
                   required
@@ -132,22 +180,17 @@ const MedicineOverview = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FiCalendar className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="date"
-                    name="expiry"
-                    value={formData.expiry}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
-                    required
-                  />
-                </div>
+                <input
+                  type="date"
+                  name="expiryDate"
+                  value={formData.expiryDate}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  required
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Initial Stock</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock</label>
                 <input
                   type="number"
                   name="stock"
@@ -159,7 +202,7 @@ const MedicineOverview = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ($)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price</label>
                 <input
                   type="number"
                   name="price"
@@ -172,22 +215,47 @@ const MedicineOverview = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount (%)</label>
-                <input
-                  type="number"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount</label>
+                <select
                   name="discount"
                   value={formData.discount}
                   onChange={handleInputChange}
-                  min="0"
-                  max="100"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
-                />
+                >
+                  <option value="">Select Discount</option>
+                  {discounts.map((discount) => (
+                    <option key={discount._id} value={discount._id}>
+                      {discount.name} - {discount.value}%
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pharmacy</label>
+                <select
+                  name="pharmacy"
+                  value={formData.pharmacy}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  required
+                >
+                  <option value="">Select Pharmacy</option>
+                  {pharmacies.map((ph) => (
+                    <option key={ph._id} value={ph._id}>
+                      {ph.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingId(null);
+                  setFormData(initialFormData);
+                }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
@@ -196,42 +264,33 @@ const MedicineOverview = () => {
                 type="submit"
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Save Medicine
+                {editingId ? 'Update Medicine' : 'Save Medicine'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Medicine Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <div className="flex space-x-4">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Medicines</option>
-              <option value="low">Low Stock</option>
-              <option value="expiring">Expiring Soon</option>
-            </select>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <FiSearch className="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search medicines..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
+      {/* Medicines Table */}
+      <div className="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <FiSearch className="w-5 h-5 text-gray-400" />
             </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300 border rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+              placeholder="Search medicines..."
+            />
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+            <thead className="bg-gray-50 dark:bg-gray-600">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Medicine</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
@@ -243,90 +302,92 @@ const MedicineOverview = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {medicines.map(medicine => (
-                <tr key={medicine.id}>
+            <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+              {filteredMedicines.map((medicine) => (
+                <tr key={medicine._id} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  {/* Medicine Name */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                        <FiPackage className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{medicine.name}</div>
-                      </div>
-                    </div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{medicine.name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{medicine.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{medicine.batch}</td>
+
+                  {/* Category */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    <div className="flex items-center">
-                      <FiCalendar className="mr-2 text-gray-400" />
-                      {medicine.expiry}
-                    </div>
+                    {medicine.category?.name || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => updateStock(medicine.id, -1)}
-                        className="p-1 text-red-600 hover:text-red-800 dark:hover:text-red-400"
-                      >
-                        <FiMinus />
-                      </button>
-                      <span className={`px-2 ${medicine.stock < 50 ? 'text-red-600 dark:text-red-400' :
-                        medicine.stock < 100 ? 'text-yellow-600 dark:text-yellow-400' :
-                          'text-green-600 dark:text-green-400'
-                        }`}>
-                        {medicine.stock}
-                      </span>
-                      <button
-                        onClick={() => updateStock(medicine.id, 1)}
-                        className="p-1 text-green-600 hover:text-green-800 dark:hover:text-green-400"
-                      >
-                        <FiPlus />
-                      </button>
-                    </div>
+
+                  {/* Batch Number */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.batchId}
                   </td>
+
+                  {/* Expiry Date */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.expiryDate ? medicine.expiryDate.split('T')[0] : 'N/A'}
+                  </td>
+
+                  {/* Stock */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.stock}
+                  </td>
+
+                  {/* Price */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     ${medicine.price.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <FiTag className="text-blue-500" />
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={medicine.discount}
-                        onChange={(e) => updateDiscount(medicine.id, parseInt(e.target.value))}
-                        className="w-16 p-1 border rounded dark:bg-gray-700"
-                      />
-                      <span>%</span>
-                    </div>
+
+                  {/* Discount */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.discount?.discountValue ? `${medicine.discount.discountValue}%` : 'N/A'}
                   </td>
+                  {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-500">
-                      Details
-                    </button>
-                    <button
-                      onClick={() => startEditing(medicine)}
-                      className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-500 p-1"
-                      title="Edit"
-                    >
-                      <FiEdit2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => deleteMedicine(medicine.id)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-500 p-1"
-                      title="Delete"
-                    >
-                      <FiTrash2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex space-x-2">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => startEditing(medicine)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      >
+                        <FiEdit2 className="w-5 h-5" />
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => deleteMedicine(medicine._id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      >
+                        <FiTrash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
+
+              {/* Empty State */}
+              {filteredMedicines.length === 0 && (
+                <tr>
+                  <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-300">
+                    {searchTerm
+                      ? 'No medicines found matching your search criteria.'
+                      : 'No medicines available. Click "Add Medicine" to get started.'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Empty state */}
+        {filteredMedicines.length === 0 && (
+          <div className="p-8 text-center">
+            <div className="text-gray-500 dark:text-gray-400">
+              {searchTerm ? (
+                <p>No medicines found matching your search criteria.</p>
+              ) : (
+                <p>No medicines available. Click "Add Medicine" to get started.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

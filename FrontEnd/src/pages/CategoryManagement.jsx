@@ -35,17 +35,7 @@ const CategoryManagement = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Add a new category
-  // const addCategory = async () => {
-  //   try {
-  //     const response = await axios.post('http://localhost:3000/api/categories', formData);
-  //     setCategories([response.data, ...categories]);
-  //     setIsAdding(false);
-  //     setFormData(initialFormData);
-  //   } catch (error) {
-  //     console.error('Error adding category:', error.response?.data || error.message);
-  //   }
-  // };
+  // Handle form submission for adding or editing a category
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -66,6 +56,7 @@ const CategoryManagement = () => {
     }
   };
 
+  // Start editing a category
   const startEditing = (category) => {
     setEditingId(category._id); // Set the ID of the category being edited
     setFormData({
@@ -76,23 +67,10 @@ const CategoryManagement = () => {
     setIsAdding(true); // Show the form
   };
 
-  // Save edited category
-  // const saveEdit = async () => {
-  //   try {
-  //     const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
-  //     setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
-  //     setEditingId(null);
-  //     setFormData(initialFormData);
-  //   } catch (error) {
-  //     console.error('Error updating category:', error.response?.data || error.message);
-  //   }
-  // };
-
   // Delete a category
   const deleteCategory = async (id) => {
-    // Show confirmation dialog
     const confirmDelete = window.confirm('Are you sure you want to delete this category?');
-    if (!confirmDelete) return; // If the user cancels, do nothing
+    if (!confirmDelete) return;
     try {
       await axios.delete(`http://localhost:3000/api/categories/${id}`);
       setCategories(categories.filter((cat) => cat._id !== id));
@@ -112,7 +90,11 @@ const CategoryManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Category Management</h1>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            setIsAdding(!isAdding);
+            setEditingId(null); // Reset editing ID when toggling the form
+            setFormData(initialFormData); // Reset the form data
+          }}
           className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           <FiPlus className="w-5 h-5 mr-2" />
@@ -120,7 +102,7 @@ const CategoryManagement = () => {
         </button>
       </div>
 
-      {/* Add Category Form */}
+      {/* Add/Edit Category Form */}
       {isAdding && (
         <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
@@ -183,6 +165,7 @@ const CategoryManagement = () => {
           </form>
         </div>
       )}
+
       {/* Categories Table */}
       <div className="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b border-gray-200 dark:border-gray-600">
@@ -206,7 +189,6 @@ const CategoryManagement = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Medicines</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
@@ -215,88 +197,33 @@ const CategoryManagement = () => {
               {filteredCategories.map((category) => (
                 <tr key={category._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === category._id ? (
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-800"
-                      />
-                    ) : (
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</div>
-                    )}
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</div>
                   </td>
                   <td className="px-6 py-4">
-                    {editingId === category._id ? (
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows={2}
-                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-800"
-                      />
-                    ) : (
-                      <div className="text-sm text-gray-500 dark:text-gray-300">
-                        {category.description || 'No description'}
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-500 dark:text-gray-300">
+                      {category.description || 'No description'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {category.medicineCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {editingId === category._id ? (
-                      <input
-                        type="date"
-                        name="createdAt"
-                        value={formData.createdAt}
-                        onChange={handleInputChange}
-                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-800"
-                      />
-                    ) : (
-                      <div className="flex items-center">
-                        <FiCalendar className="flex-shrink-0 mr-2 text-gray-400" />
-                        {category.createdAt.split('T')[0]}
-                      </div>
-                    )}
+                    <div className="flex items-center">
+                      <FiCalendar className="flex-shrink-0 mr-2 text-gray-400" />
+                      {category.createdAt.split('T')[0]}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      {editingId === category._id ? (
-                        <>
-                          <button
-                            onClick={handleSubmit}
-                            className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-500"
-                          >
-                            <FiCheck className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingId(null);
-                              setFormData(initialFormData);
-                            }}
-                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-500"
-                          >
-                            <FiX className="w-5 h-5" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => startEditing(category)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-500"
-                          >
-                            <FiEdit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => deleteCategory(category._id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-500"
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => startEditing(category)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-500"
+                      >
+                        <FiEdit2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => deleteCategory(category._id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-500"
+                      >
+                        <FiTrash2 className="w-5 h-5" />
+                      </button>
                     </div>
                   </td>
                 </tr>

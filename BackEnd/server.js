@@ -4,6 +4,10 @@ const cors = require('cors');
 const userRoutes = require('./routes/user');
 const pharmacyRoutes = require('./routes/pharmacy');
 const categoryRoutes = require('./routes/category');
+const medicineRoutes = require('./routes/medicine');
+const discountRoutes = require('./routes/discount');
+
+
 
 
 
@@ -22,7 +26,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/users', userRoutes);
 app.use('/api/pharmacies', pharmacyRoutes);
 app.use('/api/categories', categoryRoutes);
-
+app.use('/api/medicines', medicineRoutes);
+app.use('/api/discounts', discountRoutes);
 
 // DB connection
 mongoose.connect('mongodb://127.0.0.1:27017/E-Dawo', {
