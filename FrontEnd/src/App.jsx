@@ -1,36 +1,48 @@
-// App.js
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard';
-import UserManagement from './pages/UserManagement';
-import PharmacyManagement from './pages/PharmacyManagement';
-import CategoryManagement from './pages/CategoryManagement';
-import MedicineOverview from './pages/MedicineOverview';
-import OrdersReport from './pages/OrdersReport';
-import PaymentsReport from './pages/PaymentsReport';
-import DiscountsManagement from './pages/DiscountsManagement';
-import Prescriptions from './pages/Prescriptions';
-import SystemSettings from './pages/SystemSettings';
-import ProfileSettings from './pages/ProfileSettings';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import AuthPage from './pages/Admin/AuthPage';
+import Dashboard from './pages/Admin/Dashboard';
+import UserManagement from './pages/Admin/UserManagement';
+import PharmacyManagement from './pages/Admin/PharmacyManagement';
+import CategoryManagement from './pages/Admin/CategoryManagement';
+import MedicineOverview from './pages/Admin/MedicineOverview';
+import OrdersReport from './pages/Admin/OrdersReport';
+import PaymentsReport from './pages/Admin/PaymentsReport';
+import DiscountsManagement from './pages/Admin/DiscountsManagement';
+import Prescriptions from './pages/Admin/Prescriptions';
+import SystemSettings from './pages/Admin/SystemSettings';
+import ProfileSettings from './pages/Admin/ProfileSettings';
 import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
+import PharmacyLayout from './components/PharmacyLayout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Pharmacy imports
+import PharmacyDashboard from './pages/pharmacy/Dashboard';
+import PharmacyMedicineManagement from './pages/pharmacy/MedicineManagement';
+import PharmacyOrders from './pages/pharmacy/Orders';
+import PharmacyPayments from './pages/pharmacy/Payments';
+import PharmacyPrescriptions from './pages/pharmacy/Prescriptions';
+import PharmacyProfile from './pages/pharmacy/Profile';
 
 function App() {
   return (
     <Routes>
+      {/* Redirect root to login */}
+      <Route path="/" element={<Navigate to="/auth" replace />} />
+
       {/* Public Route */}
       <Route path="/auth" element={<AuthPage />} />
 
-      {/* Protected Routes with Layout */}
+      {/* Admin Protected Routes */}
       <Route
-        path="/"
+        path="/admin"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <Layout />
           </ProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="pharmacies" element={<PharmacyManagement />} />
         <Route path="categories" element={<CategoryManagement />} />
@@ -42,9 +54,26 @@ function App() {
         <Route path="settings" element={<SystemSettings />} />
         <Route path="profile" element={<ProfileSettings />} />
       </Route>
+      
+      {/* Pharmacy Manager Protected Routes */}
+      <Route
+        path="/pharmacy"
+        element={
+          <ProtectedRoute allowedRoles={['Pharmacy Manager']}>
+            <PharmacyLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<PharmacyDashboard />} />
+        <Route path="dashboard" element={<PharmacyDashboard />} />
+        <Route path="MedicineManagement" element={<PharmacyMedicineManagement />} />
+        <Route path="orders" element={<PharmacyOrders />} />
+        <Route path="payments" element={<PharmacyPayments />} />
+        <Route path="prescriptions" element={<PharmacyPrescriptions />} />
+        <Route path="profile" element={<PharmacyProfile />} />
+      </Route>
     </Routes>
   );
 }
-
 
 export default App;

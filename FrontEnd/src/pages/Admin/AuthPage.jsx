@@ -28,28 +28,33 @@ const AuthPage = () => {
           email: formData.email,
           password: formData.password,
         });
-      
+
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+        localStorage.setItem('role', response.data.user.role); // <-- Save role for ProtectedRoute
+
         console.log('Login successful:', response.data);
         alert('Login successful');
-      
-        navigate('/');
+        if (response.data.user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (response.data.user.role === 'Pharmacy Manager') {
+          navigate('/pharmacy/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
-      // Signup Request
-      const response = await axios.post('http://localhost:3000/api/users', formData);
-      console.log('Signup successful:', response.data);
-      alert('Signup successful');
-      setIsLogin(true); // Switch to login after signup
-      // Optionally clear form fields after signup
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'pharmacyManager',
-      });
-    }
+        const response = await axios.post('http://localhost:3000/api/users', formData);
+        console.log('Signup successful:', response.data);
+        alert('Signup successful');
+        setIsLogin(true); // Switch to login after signup
+        // Optionally clear form fields after signup
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'pharmacyManager',
+        });
+      }
     } catch (error) {
       console.error('Error:', error.response?.data?.error || error.message);
       alert(error.response?.data?.error || 'An error occurred');

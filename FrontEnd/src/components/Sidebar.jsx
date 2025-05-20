@@ -7,17 +7,17 @@ import {
 
 const Sidebar = ({ sidebarOpen }) => {
   const navItems = [
-    { path: '/', icon: FiHome, label: 'Dashboard' },
-    { path: '/users', icon: FiUsers, label: 'User Management' },
-    { path: '/pharmacies', icon: FiShoppingBag, label: 'Pharmacy Management' },
-    { path: '/categories', icon: FiLayers, label: 'Category Management' },
-    { path: '/medicines', icon: FiPieChart, label: 'Medicine Overview' },
-    { path: '/orders', icon: FiShoppingBag, label: 'Orders Report' },
-    { path: '/payments', icon: FiDollarSign, label: 'Payments Report' },
-    { path: '/discounts', icon: FiTag, label: 'Discounts Management' },
-    { path: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
-    { path: '/settings', icon: FiSettings, label: 'System Settings' },
-    { path: '/profile', icon: FiUser, label: 'Profile Settings' },
+     { path: '/admin/dashboard', icon: FiHome, label: 'Dashboard' },
+  { path: '/admin/users', icon: FiUsers, label: 'User Management' },
+  { path: '/admin/pharmacies', icon: FiShoppingBag, label: 'Pharmacy Management' },
+  { path: '/admin/categories', icon: FiLayers, label: 'Category Management' },
+  { path: '/admin/medicines', icon: FiPieChart, label: 'Medicine Overview' },
+  { path: '/admin/orders', icon: FiShoppingBag, label: 'Orders Report' },
+  { path: '/admin/payments', icon: FiDollarSign, label: 'Payments Report' },
+  { path: '/admin/discounts', icon: FiTag, label: 'Discounts Management' },
+  { path: '/admin/prescriptions', icon: FiFileText, label: 'Prescriptions' },
+  { path: '/admin/settings', icon: FiSettings, label: 'System Settings' },
+  { path: '/admin/profile', icon: FiUser, label: 'Profile Settings' },
   ];
 
   return (

@@ -4,8 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom'; // Import Router
 
 import './index.css'
 import App from './App.jsx'
-import AuthPage from './pages/AuthPage.jsx'
-
+import AuthPage from './pages/Admin/AuthPage.jsx';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
