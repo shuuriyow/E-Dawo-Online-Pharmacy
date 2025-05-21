@@ -19,17 +19,20 @@ function PharmacyLayout() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-  useEffect(() => {
-    async function fetchAndSavePharmacy() {
-      try {
-        const response = await axios.get('http://localhost:3000/api/pharmacies/me');
-        localStorage.setItem('pharmacy', JSON.stringify(response.data));
-      } catch (error) {
-        console.error('Failed to fetch pharmacy:', error);
-      }
+useEffect(() => {
+  async function fetchAndSavePharmacy() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/pharmacies/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      localStorage.setItem('pharmacy', JSON.stringify(response.data));
+    } catch (error) {
+      console.error('Failed to fetch pharmacy:', error);
     }
-    fetchAndSavePharmacy();
-  }, []);
+  }
+  fetchAndSavePharmacy();
+}, []);
 
   return (
     <div className={`flex h-screen bg-gray-50 ${darkMode ? 'dark' : ''}`}>

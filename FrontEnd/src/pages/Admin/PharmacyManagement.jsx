@@ -17,6 +17,7 @@ const PharmacyManagement = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [pharmacies, setPharmacies] = useState([]); // Start with an empty array
   const [searchTerm, setSearchTerm] = useState('');
+  const [managers, setManagers] = useState([]);
 
   // ⬅ Move this to the top level, not inside useEffect
   const fetchPharmacies = async () => {
@@ -35,6 +36,18 @@ const PharmacyManagement = () => {
     fetchPharmacies();
   }, []);
 
+  // Fetch managers
+  useEffect(() => {
+    async function fetchManagers() {
+      try {
+        const res = await axios.get('http://localhost:3000/api/users?role=Pharmacy Manager');
+        setManagers(res.data);
+      } catch (err) {
+        console.error('Failed to fetch managers:', err);
+      }
+    }
+    fetchManagers();
+  }, []);
 
 
   const handleInputChange = (e) => {
@@ -64,7 +77,16 @@ const PharmacyManagement = () => {
         await axios.put(`http://localhost:3000/api/pharmacies/${formData.id}`, formData);
       } else {
         // Add new pharmacy
-        await axios.post('http://localhost:3000/api/pharmacies', formData);
+        const token = localStorage.getItem('token');
+        await axios.post(
+          'http://localhost:3000/api/pharmacies',
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
       }
       fetchPharmacies();
       setFormData(initialFormData);
@@ -180,14 +202,20 @@ const PharmacyManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Manager Name</label>
-                <input
-                  type="text"
+                <select
                   name="manager"
                   value={formData.manager}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
                   required
-                />
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="">Select Manager</option>
+                  {managers.map((manager) => (
+                    <option key={manager._id} value={manager._id}>
+                      {manager.name} ({manager.email})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
@@ -304,7 +332,11 @@ const PharmacyManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{pharmacy.license}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{pharmacy.manager}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {pharmacy.manager ? pharmacy.manager.name : 'N/A'}
+                    <br />
+                    <span className="text-xs text-gray-400">{pharmacy.manager ? pharmacy.manager.email : ''}</span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{pharmacy.phone}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{pharmacy.address}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
@@ -315,7 +347,7 @@ const PharmacyManagement = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-          ${pharmacy.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+        ${pharmacy.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                         pharmacy.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                           'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
                       {pharmacy.status}

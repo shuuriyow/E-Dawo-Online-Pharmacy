@@ -5,8 +5,8 @@ const PharmacySidebar = ({ sidebarOpen }) => {
   // Get pharmacy info from localStorage (set this after login or fetch)
   const pharmacy = JSON.parse(localStorage.getItem('pharmacy') || '{}');
   const pharmacyName = pharmacy.name || 'My Pharmacy';
-  const pharmacyLogo = pharmacy.logo; // Should be a URL or base64 string
-  
+  const pharmacyLogo = pharmacy.logo;
+
   const navItems = [
     { path: '/pharmacy/dashboard', icon: FiHome, label: 'Dashboard' },
     { path: '/pharmacy/MedicineManagement', icon: FiPackage, label: 'Medicine Management' },
@@ -46,7 +46,7 @@ const PharmacySidebar = ({ sidebarOpen }) => {
           <NavLink
             key={index}
             to={item.path}
-            className={({ isActive }) => 
+            className={({ isActive }) =>
               `flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800 
               ${isActive ? 'bg-blue-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400' : ''} 
               ${sidebarOpen ? 'justify-start' : 'justify-center'}`

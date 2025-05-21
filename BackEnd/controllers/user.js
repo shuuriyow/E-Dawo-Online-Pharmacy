@@ -2,7 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'your_jwt_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 const createUser = async (req, res) => {
   try {
@@ -13,7 +13,8 @@ const createUser = async (req, res) => {
       return res.status(409).json({ error: 'Email already in use' });
     }
 
-    const newUser = new User({ name, email, password, role });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ name, email, password: hashedPassword, role });
     await newUser.save();
 
     res.status(201).json({ message: 'User created', user: newUser });
@@ -21,7 +22,6 @@ const createUser = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,7 +43,6 @@ const loginUser = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}, 'name email role status createdDate'); // Ensure createdAt is included
