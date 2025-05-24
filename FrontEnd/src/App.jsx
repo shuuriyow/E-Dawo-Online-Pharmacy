@@ -54,7 +54,7 @@ function App() {
         <Route path="settings" element={<SystemSettings />} />
         <Route path="profile" element={<ProfileSettings />} />
       </Route>
-      
+
       {/* Pharmacy Manager Protected Routes */}
       <Route
         path="/pharmacy"

@@ -7,6 +7,7 @@ const categoryRoutes = require('./routes/category');
 const medicineRoutes = require('./routes/medicine');
 const discountRoutes = require('./routes/discount');
 const prescriptionRoutes = require('./routes/Prescription');
+const ordersRoutes = require('./routes/orders');
 
 
 
@@ -32,7 +33,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
-
+app.use('/api/orders', ordersRoutes);
 
 // DB connection
 mongoose.connect('mongodb://127.0.0.1:27017/E-Dawo', {
