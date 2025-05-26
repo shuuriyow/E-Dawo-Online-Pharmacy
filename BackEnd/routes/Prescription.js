@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const Prescription = require('../models/Prescription');
+const authenticate = require('../middleware/authenticate');
+
 
 // Set up multer storage
 const storage = multer.diskStorage({
@@ -26,7 +28,8 @@ router.get('/', async (req, res) => {
 });
 
 // Upload a new prescription
-router.post('/', upload.single('prescription'), async (req, res) => {
+// Upload a new prescription
+router.post('/', authenticate, upload.single('prescription'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ message: 'No file uploaded' });
@@ -36,7 +39,7 @@ router.post('/', upload.single('prescription'), async (req, res) => {
       originalFilename: file.originalname,
       fileSize: file.size,
       fileType: file.mimetype,
-      user: req.body.user || null,
+      user: req.user._id, // <-- Set user from authenticated user!
       status: 'pending'
     });
     await prescription.save();
@@ -78,6 +81,25 @@ router.delete('/:id', async (req, res) => {
 });
 
 
-
+// Approve prescription and assign to pharmacy
+router.patch('/:id/approve', async (req, res) => {
+  try {
+    const { pharmacyId } = req.body;
+    if (!pharmacyId) {
+      return res.status(400).json({ message: 'pharmacyId is required' });
+    }
+    const prescription = await Prescription.findByIdAndUpdate(
+      req.params.id,
+      { status: 'approved', pharmacy: pharmacyId, updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!prescription) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+    res.json(prescription);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to approve prescription', error: err.message });
+  }
+});
 
 module.exports = router;

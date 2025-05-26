@@ -9,13 +9,27 @@ const Prescriptions = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pharmacies, setPharmacies] = useState([]);
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState({});
   const [error, setError] = useState(null);
 
+   // Fetch prescriptions (your existing logic)
+  useEffect(() => {
+    axios.get(API_URL).then(res => setPrescriptions(res.data));
+  }, []);
+
+   // Fetch pharmacies for dropdown
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/pharmacies')
+      .then(res => setPharmacies(res.data))
+      .catch(() => setPharmacies([]));
+  }, []);
+
   // When rendering the view/download link:
-const getFullImageUrl = (imageUrl) => {
-  if (imageUrl.startsWith('http')) return imageUrl;
-  return `http://localhost:3000${imageUrl}`;
-};
+  const getFullImageUrl = (imageUrl) => {
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `http://localhost:3000${imageUrl}`;
+  };
 
   // Fetch prescriptions from backend
   useEffect(() => {
@@ -45,27 +59,29 @@ const getFullImageUrl = (imageUrl) => {
   };
 
   // Upload prescription to backend
-  const uploadPrescription = async () => {
-    if (!selectedFile) return;
-    setIsUploading(true);
-    setError(null);
-    try {
-      const formData = new FormData();
-      formData.append('prescription', selectedFile);
-      // You may need to append user info here if required by your backend
-      // formData.append('user', userId);
+ const uploadPrescription = async () => {
+  if (!selectedFile) return;
+  setIsUploading(true);
+  setError(null);
+  try {
+    const formData = new FormData();
+    formData.append('prescription', selectedFile);
 
-      // The backend must handle file upload and return the prescription object
-      const res = await axios.post(API_URL, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setPrescriptions([res.data, ...prescriptions]);
-      setSelectedFile(null);
-    } catch (err) {
-      setError('Upload failed');
-    }
-    setIsUploading(false);
-  };
+    const token = localStorage.getItem('token'); // Get JWT token
+
+    const res = await axios.post(API_URL, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}` // Add token here
+        // Do NOT set 'Content-Type' when using FormData with axios
+      },
+    });
+    setPrescriptions([res.data, ...prescriptions]);
+    setSelectedFile(null);
+  } catch (err) {
+    setError('Upload failed');
+  }
+  setIsUploading(false);
+};
 
   // Delete prescription
   const deletePrescription = async (id) => {
@@ -76,6 +92,21 @@ const getFullImageUrl = (imageUrl) => {
       setError('Failed to delete prescription');
     }
   };
+
+ // Approve prescription and assign to pharmacy
+  const approvePrescription = async (id, pharmacyId) => {
+    try {
+      const res = await axios.patch(`${API_URL}/${id}/approve`, { pharmacyId });
+      setPrescriptions(
+        prescriptions.map((p) =>
+          p._id === id ? { ...p, status: res.data.status, pharmacy: res.data.pharmacy } : p
+        )
+      );
+    } catch (err) {
+      setError('Failed to approve prescription');
+    }
+  };
+
 
   // Approve or reject prescription
   const updateStatus = async (id, newStatus) => {
@@ -142,114 +173,138 @@ const getFullImageUrl = (imageUrl) => {
 
       {/* Prescriptions Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Prescription
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center">
-                    Loading...
-                  </td>
-                </tr>
-              ) : prescriptions.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                    No prescriptions found. Upload one to get started.
-                  </td>
-                </tr>
-              ) : (
-                prescriptions.map((prescription) => (
-                  <tr key={prescription._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs">
-                        {prescription.originalFilename}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {prescription.fileType}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm text-gray-900 dark:text-white">
-                        {new Date(prescription.createdAt).toLocaleDateString()}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {prescription.fileSize ? `${(prescription.fileSize / 1024).toFixed(2)} KB` : ''}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(prescription.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={() => window.open(getFullImageUrl(prescription.imageUrl), '_blank')}
-                          className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400"
-                          title="View"
-                        >
-                          <FiEye size={18} />
-                        </button>
-                        <button
-                          onClick={() => updateStatus(prescription._id, 'approved')}
-                          className="text-green-600 hover:text-green-900 dark:hover:text-green-400"
-                          title="Approve"
-                          disabled={prescription.status === 'approved'}
-                        >
-                          <FiCheck size={18} />
-                        </button>
-                        <button
-                          onClick={() => updateStatus(prescription._id, 'rejected')}
-                          className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
-                          title="Reject"
-                          disabled={prescription.status === 'rejected'}
-                        >
-                          <FiX size={18} />
-                        </button>
-                        <button
-                          onClick={() => deletePrescription(prescription._id)}
-                          className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
-                          title="Delete"
-                        >
-                          <FiTrash2 size={18} />
-                        </button>
-                         <button
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = prescription.imageUrl;
-                            link.download = prescription.originalFilename;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                          className="text-gray-600 hover:text-gray-900 dark:hover:text-gray-400"
-                          title="Download"
-                        >
-                          <FiDownload size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-50 dark:bg-gray-700">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            Prescription
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            Details
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            Status
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        {loading ? (
+          <tr>
+            <td colSpan="4" className="px-6 py-4 text-center">
+              Loading...
+            </td>
+          </tr>
+        ) : prescriptions.length === 0 ? (
+          <tr>
+            <td colSpan="4" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+              No prescriptions found. Upload one to get started.
+            </td>
+          </tr>
+        ) : (
+          prescriptions.map((prescription) => (
+            <tr key={prescription._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs">
+                  {prescription.originalFilename}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {prescription.fileType}
+                </p>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <p className="text-sm text-gray-900 dark:text-white">
+                  {new Date(prescription.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {prescription.fileSize ? `${(prescription.fileSize / 1024).toFixed(2)} KB` : ''}
+                </p>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {getStatusBadge(prescription.status)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div className="flex space-x-3 items-center">
+                  <button
+                    onClick={() => window.open(getFullImageUrl(prescription.imageUrl), '_blank')}
+                    className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400"
+                    title="View"
+                  >
+                    <FiEye size={18} />
+                  </button>
+                  {/* Approve with pharmacy dropdown */}
+                  {prescription.status !== 'approved' && (
+                    <>
+                      <select
+                        className="p-1 border rounded"
+                        value={selectedPharmacyId[prescription._id] || ''}
+                        onChange={e =>
+                          setSelectedPharmacyId({
+                            ...selectedPharmacyId,
+                            [prescription._id]: e.target.value
+                          })
+                        }
+                      >
+                        <option value="">Select Pharmacy</option>
+                        {pharmacies.map(pharmacy => (
+                          <option key={pharmacy._id} value={pharmacy._id}>
+                            {pharmacy.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="ml-2 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                        disabled={!selectedPharmacyId[prescription._id]}
+                        onClick={() =>
+                          approvePrescription(prescription._id, selectedPharmacyId[prescription._id])
+                        }
+                        title="Approve"
+                      >
+                        <FiCheck size={18} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => updateStatus(prescription._id, 'rejected')}
+                    className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                    title="Reject"
+                    disabled={prescription.status === 'rejected'}
+                  >
+                    <FiX size={18} />
+                  </button>
+                  <button
+                    onClick={() => deletePrescription(prescription._id)}
+                    className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                    title="Delete"
+                  >
+                    <FiTrash2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = prescription.imageUrl;
+                      link.download = prescription.originalFilename;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="text-gray-600 hover:text-gray-900 dark:hover:text-gray-400"
+                    title="Download"
+                  >
+                    <FiDownload size={18} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
     </div>
   );
 };

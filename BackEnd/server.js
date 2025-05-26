@@ -8,6 +8,10 @@ const medicineRoutes = require('./routes/medicine');
 const discountRoutes = require('./routes/discount');
 const prescriptionRoutes = require('./routes/Prescription');
 const ordersRoutes = require('./routes/orders');
+const paymentsRoutes = require('./routes/payments');
+const pharmacyPrescriptionsRoutes = require('./routes/pharmacyPrescriptions');
+const adminOrdersRoutes = require('./routes/adminOrders');
+const adminPaymentsRoutes = require('./routes/adminPayments');
 
 
 
@@ -34,6 +38,10 @@ app.use('/api/medicines', medicineRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/pharmacy-prescriptions', pharmacyPrescriptionsRoutes); 
+app.use('/api/admin/orders', adminOrdersRoutes);
+app.use('/api/admin/payments', adminPaymentsRoutes);
 
 // DB connection
 mongoose.connect('mongodb://127.0.0.1:27017/E-Dawo', {
