@@ -11,9 +11,8 @@ const AuthPage = () => {
     name: '',
     email: '',
     password: '',
-    role: 'pharmacyManager',
+    role: 'Pharmacy Manager', // <-- Capital P, Capital M, matches backend
   });
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -52,7 +51,7 @@ const AuthPage = () => {
           name: '',
           email: '',
           password: '',
-          role: 'pharmacyManager',
+          role: 'Pharmacy Manager', // <--
         });
       }
     } catch (error) {
@@ -188,7 +187,7 @@ const AuthPage = () => {
                     onChange={handleInputChange}
                     className="block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none"
                   >
-                    <option value="pharmacyManager">Pharmacy Manager</option>
+                    <option value="Pharmacy Manager">Pharmacy Manager</option>
                     <option value="admin">Administrator</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

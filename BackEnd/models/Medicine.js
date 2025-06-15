@@ -7,10 +7,12 @@ const medicineSchema = new mongoose.Schema({
   stock: Number,
   batchId: String,
   expiryDate: Date,
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+  image: String, // file path
+  originalImageName: String, // <== ADD THIS LINE
+ category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
   pharmacy: { type: mongoose.Schema.Types.ObjectId, ref: 'Pharmacy' },
-   discount: { type: mongoose.Schema.Types.ObjectId, ref: 'Discount' },
-    createdAt: { type: Date, default: Date.now },
+  discount: { type: mongoose.Schema.Types.ObjectId, ref: 'Discount' },
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('Medicine', medicineSchema);

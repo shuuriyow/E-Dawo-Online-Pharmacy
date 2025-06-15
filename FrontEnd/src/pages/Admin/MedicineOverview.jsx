@@ -292,7 +292,9 @@ const MedicineOverview = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
             <thead className="bg-gray-50 dark:bg-gray-600">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Medicine</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Description </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Batch</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Expiry</th>
@@ -300,16 +302,37 @@ const MedicineOverview = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Discount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
               {filteredMedicines.map((medicine) => (
                 <tr key={medicine._id} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  {/* IMAGE */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.image ? (
+                      <div className="flex flex-col items-start space-y-1">
+                        <img
+                          src={`http://localhost:3000/uploads/medicines/${medicine.image}`}
+                          alt={medicine.name}
+                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                          className="rounded"
+                        />
+                        <span className="text-xs text-gray-400">{medicine.imageOriginalName}</span>
+                      </div>
+                    ) : (
+                      'No image'
+                    )}
+                  </td>
+
                   {/* Medicine Name */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{medicine.name}</div>
                   </td>
-
+                  {/* Description */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {medicine.description || <span className="text-gray-400">No description</span>}
+                  </td>
                   {/* Category */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     {medicine.category?.name || 'N/A'}
@@ -339,6 +362,9 @@ const MedicineOverview = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     {medicine.discount?.discountValue ? `${medicine.discount.discountValue}%` : 'N/A'}
                   </td>
+
+
+
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

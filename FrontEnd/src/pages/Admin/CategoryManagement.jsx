@@ -6,6 +6,8 @@ const initialFormData = {
   name: '',
   description: '',
   createdAt: new Date().toISOString().split('T')[0],
+  image: '',        // <-- Add this
+  items: '',        // <-- Add this (number or string)
 };
 
 const CategoryManagement = () => {
@@ -39,32 +41,49 @@ const CategoryManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('createdAt', formData.createdAt);
+      data.append('items', formData.items);
+      if (formData.image instanceof File) {
+        data.append('image', formData.image);
+      }
+
+      let response;
       if (editingId) {
-        // Update existing category
-        const response = await axios.put(`http://localhost:3000/api/categories/${editingId}`, formData);
+        response = await axios.put(
+          `http://localhost:3000/api/categories/${editingId}`,
+          data,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
         setCategories(categories.map((cat) => (cat._id === editingId ? response.data : cat)));
       } else {
-        // Add new category
-        const response = await axios.post('http://localhost:3000/api/categories', formData);
+        response = await axios.post(
+          'http://localhost:3000/api/categories',
+          data,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
         setCategories([response.data, ...categories]);
       }
-      setFormData(initialFormData); // Reset the form
-      setEditingId(null); // Clear the editing ID
-      setIsAdding(false); // Hide the form
+      setFormData(initialFormData);
+      setEditingId(null);
+      setIsAdding(false);
     } catch (error) {
       console.error('Error saving category:', error.response?.data || error.message);
     }
   };
-
   // Start editing a category
   const startEditing = (category) => {
-    setEditingId(category._id); // Set the ID of the category being edited
+    setEditingId(category._id);
     setFormData({
       name: category.name,
       description: category.description,
       createdAt: category.createdAt.split('T')[0],
+      image: category.image || '',
+      items: category.items ?? '',
     });
-    setIsAdding(true); // Show the form
+    setIsAdding(true);
   };
 
   // Delete a category
@@ -132,6 +151,29 @@ const CategoryManagement = () => {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Items</label>
+                <input
+                  type="number"
+                  name="items"
+                  value={formData.items}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Number of items"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image Upload</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={e => setFormData(prev => ({ ...prev, image: e.target.files[0] }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <textarea
@@ -187,8 +229,10 @@ const CategoryManagement = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
             <thead className="bg-gray-50 dark:bg-gray-600">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" >Image</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Items</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
@@ -199,10 +243,23 @@ const CategoryManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {category.image ? (
+                      <img
+                        src={`http://localhost:3000/TopCategories/${category.image}`} alt={category.name}
+                        className="w-10 h-10 object-contain rounded"
+                      />
+                    ) : (
+                      <span className="text-gray-400">No Image</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500 dark:text-gray-300">
                       {category.description || 'No description'}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {category.items ?? 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     <div className="flex items-center">

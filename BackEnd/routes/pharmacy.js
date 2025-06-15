@@ -15,6 +15,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET a single pharmacy by name
+router.get('/:id', async (req, res) => {
+  try {
+    const pharmacy = await Pharmacy.findById(req.params.id);
+    if (!pharmacy) {
+      return res.status(404).json({ message: 'Pharmacy not found' });
+    }
+    res.json(pharmacy);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch pharmacy', error: error.message });
+  }
+});
+
 // GET the pharmacy for the current manager
 router.get('/me', authenticate, async (req, res) => {
   try {

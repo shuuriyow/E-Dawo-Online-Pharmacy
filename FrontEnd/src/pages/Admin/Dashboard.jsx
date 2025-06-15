@@ -1,6 +1,9 @@
 // pages/Dashboard.js
 import { FiUsers, FiShoppingBag, FiPackage, FiDollarSign, FiTag, FiFileText } from 'react-icons/fi';
 import { Bar, Pie, Line } from 'react-chartjs-2';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -27,16 +30,39 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-    // Stats data
-    const stats = [
-        { title: 'Total Pharmacies', value: '1,254', icon: FiShoppingBag, change: '+12%', trend: 'up' },
-        { title: 'Total Medicines', value: '8,542', icon: FiPackage, change: '+5%', trend: 'up' },
-        { title: 'Total Orders', value: '3,215', icon: FiShoppingBag, change: '+8%', trend: 'up' },
-        { title: 'Total Payments', value: '$42,850', icon: FiDollarSign, change: '+15%', trend: 'up' },
-        { title: 'Active Discounts', value: '24', icon: FiTag, change: '-3%', trend: 'down' },
-        { title: 'Prescriptions', value: '1,856', icon: FiFileText, change: '+20%', trend: 'up' },
-    ];
 
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [recentOrders, setRecentOrders] = useState([]);
+
+    useEffect(() => {
+        axios.get('http://localhost:3000/api/dashboard/stats')
+            .then(res => {
+                setStats(res.data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+    useEffect(() => {
+        axios.get('http://localhost:3000/api/orders/recent')
+            .then(res => setRecentOrders(res.data))
+            .catch(() => setRecentOrders([]));
+    }, []);
+
+    if (loading) {
+        return <div className="text-center py-10 text-lg text-gray-500">Loading dashboard...</div>;
+    }
+    // Prepare stats for display
+
+    const statsArray = [
+        { title: 'Total Pharmacies', value: stats.totalPharmacies, icon: FiShoppingBag, change: '+12%', trend: 'up' },
+        { title: 'Total Medicines', value: stats.totalMedicines, icon: FiPackage, change: '+5%', trend: 'up' },
+        { title: 'Total Orders', value: stats.totalOrders, icon: FiShoppingBag, change: '+8%', trend: 'up' },
+        { title: 'Total Payments', value: `$${stats.totalPayments.toLocaleString()}`, icon: FiDollarSign, change: '+15%', trend: 'up' },
+        { title: 'Active Discounts', value: stats.activeDiscounts, icon: FiTag, change: '-3%', trend: 'down' },
+        { title: 'Prescriptions', value: stats.prescriptions, icon: FiFileText, change: '+20%', trend: 'up' },
+    ];
     // Chart data
     const ordersData = {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
@@ -88,14 +114,14 @@ const Dashboard = () => {
             },
         ],
     };
-      
+
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Overview</h1>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stats.map((stat, index) => (
+                {statsArray.map((stat, index) => (
                     <div key={index} className="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -201,20 +227,24 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                {[1, 2, 3, 4, 5].map((item) => (
-                                    <tr key={item}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">#ORD-{1000 + item}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Pharmacy {item}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${(50 + item * 10).toFixed(2)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                {recentOrders.map((order) => (
+                                    <tr key={order._id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{order._id}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{order.pharmacy?.name || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                            ${order.total?.toFixed(2) || '0.00'}
+                                        </td>                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${item % 3 === 0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                                    item % 3 === 1 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                                {item % 3 === 0 ? 'Delivered' : item % 3 === 1 ? 'Processing' : 'Cancelled'}
+  ${order.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                                    order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                                        order.status === 'Cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                                            'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'}`}>
+                                                {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{new Date().toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                            {order.date ? new Date(order.date).toLocaleDateString() : 'N/A'}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
