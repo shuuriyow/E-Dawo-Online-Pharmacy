@@ -17,7 +17,7 @@
     "chart.js": "^4.4.8",
     "clear": "^0.1.0",
     "cors": "^2.8.5",
-    "framer-motion": "^12.16.0",
+    "framer-motion": "^12.18.1",
     "lucide-react": "^0.513.0",
     "postcss": "^8.5.4",
     "react": "^19.0.0",

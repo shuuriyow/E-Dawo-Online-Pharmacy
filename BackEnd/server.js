@@ -51,7 +51,7 @@ app.use('/api/admin/payments', adminPaymentsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // MongoDB Connection
-mongoose.connect('mongodb://127.0.0.1:27017/E-Dawo', {
+mongoose.connect('mongodb://localhost:27017/E-Dawo', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

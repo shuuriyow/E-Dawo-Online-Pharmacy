@@ -72,6 +72,9 @@ const handleFileChange = async (e) => {
 };
 
 
+  // Account dropdown state
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+
   return (
     <div className="bg-white px-6 py-3 flex items-center justify-between shadow border-b border-blue-200">
       {/* Logo */}
@@ -120,22 +123,22 @@ const handleFileChange = async (e) => {
           />
 
           {/* Search Button */}
-          <button className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-r-md flex items-center justify-center transition-colors duration-200">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-r-md flex items-center justify-center transition-colors duration-200">
             <FiSearch className="text-lg" />
           </button>
         </div>
       </div>
 
       {/* Buttons */}
-      <div className="flex space-x-3">
-      <button
+      <div className="flex space-x-3 items-center relative">
+        <button
           type="button"
           className="flex items-center border border-gray-200 px-4 py-2 rounded-md bg-white hover:bg-gray-50 font-medium text-gray-700 transition-colors duration-200"
           onClick={() => fileInputRef.current.click()}
         >
           <FiUpload className="mr-2" /> Upload Prescription
         </button>
-         {/* Hidden file input */}
+        {/* Hidden file input */}
         <input
           type="file"
           accept="image/*,.pdf"
@@ -155,9 +158,21 @@ const handleFileChange = async (e) => {
             )}
           </button>
         </Link>
-        <button className="flex items-center border border-gray-200 px-4 py-2 rounded-md bg-white hover:bg-gray-50 font-medium text-gray-700 transition-colors duration-200">
-          <FiUser className="mr-2" /> Account <span className="ml-1">&#9662;</span>
-        </button>
+        {/* Sign In / Sign Up Buttons */}
+        <Link
+          to="/signin"
+          className="flex items-center gap-2 px-5 py-2 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition-colors duration-150 border border-blue-500 bg-blue-50"
+        >
+          <FiUser className="text-blue-500" />
+          Sign In
+        </Link>
+        <Link
+          to="/signup"
+          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors duration-150"
+        >
+          <FiUser className="text-white" />
+          Sign Up
+        </Link>
       </div>
     </div>
   );

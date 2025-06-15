@@ -32,12 +32,19 @@ import PharmacyPrescriptions from './pages/pharmacy/Prescriptions';
 import PharmacyProfile from './pages/pharmacy/Profile';
 
 
+
 // Customer (Public) Pages
 import PublicLayout from './components/PublicLayout';
 import Home from './pages/Public/Home';
 import CartPage from './pages/Public/CartPage';
 import CheckoutPage from './pages/Public/CheckoutPage';
 import PharmacyPage from './pages/Public/PharmacyPage';
+import SignIn from './pages/Public/SignIn';
+import SignUp from './pages/Public/SignUp';
+import AboutUs from './pages/Public/AboutUs';
+import ContactUs from './pages/Public/ContactUs';
+import FAQs from './pages/Public/FAQs';
+
 
 // Protection
 import ProtectedRoute from './components/ProtectedRoute';
@@ -52,6 +59,12 @@ function App() {
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<Home />} />
          <Route path="/pharmacies/:pharmacyId" element={<PharmacyPage />} />
+          <Route path="signin" element={<SignIn />} />
+          <Route path="signup" element={<SignUp />} />
+          {/* ✅ Add more public routes here */}
+          <Route path="about" element={<AboutUs />} />
+          <Route path="contact" element={<ContactUs />} />
+          <Route path="faqs" element={<FAQs />} />
 
           {/* In future: Add About, Categories, Contact, etc. here */}
         </Route>
