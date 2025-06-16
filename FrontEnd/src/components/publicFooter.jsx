@@ -26,20 +26,27 @@ const PublicFooter = () => {
       <div className="container mx-auto px-6 md:px-20 grid grid-cols-1 md:grid-cols-4 gap-10">
 
         {/* Logo and About */}
-        <div>
-          <img src="/logo.png" alt="E-Dawo Logo" className="w-36 mb-4" />
+        <div className="flex flex-col">
+          {/* Logo with blue background and white E */}
+          <div className="flex items-center mb-4">
+            <div className="bg-white rounded-lg w-12 h-12 flex items-center justify-center mr-3">
+              <span className="text-blue-600 font-bold text-2xl">E</span>
+            </div>
+            <div>
+              <span className="text-white font-extrabold text-xl tracking-wide">E-DAWO</span>
+              <div className="text-gray-200 text-sm">Online Pharmacy</div>
+            </div>
+          </div>
           <p className="text-sm text-gray-100">
             E-Dawo Online Pharmacy is a modern digital platform that connects customers to multiple pharmacies, offering a wide range of medicines and healthcare.
           </p>
           <div className="flex mt-4 space-x-4">
-            <a href="#" className="hover:scale-110 transition-transform duration-300"><FiInstagram /></a>
-            <a href="#" className="hover:scale-110 transition-transform duration-300"><FaWhatsapp /></a>
-            <a href="#" className="hover:scale-110 transition-transform duration-300"><FiFacebook /></a>
-            <a href="#" className="hover:scale-110 transition-transform duration-300"><FiLinkedin /></a>
+            <a href="#" className="hover:scale-110 transition-transform duration-300 text-white"><FiInstagram /></a>
+            <a href="#" className="hover:scale-110 transition-transform duration-300 text-white"><FaWhatsapp /></a>
+            <a href="#" className="hover:scale-110 transition-transform duration-300 text-white"><FiFacebook /></a>
+            <a href="#" className="hover:scale-110 transition-transform duration-300 text-white"><FiLinkedin /></a>
           </div>
         </div>
-
-        {/* Quick Links */}
         <div>
           <h4 className="font-bold mb-4 text-white">Quick Links</h4>
           <ul className="space-y-2 text-sm">

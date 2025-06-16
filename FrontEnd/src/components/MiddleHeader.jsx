@@ -158,21 +158,32 @@ const handleFileChange = async (e) => {
             )}
           </button>
         </Link>
-        {/* Sign In / Sign Up Buttons */}
-        <Link
-          to="/signin"
-          className="flex items-center gap-2 px-5 py-2 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition-colors duration-150 border border-blue-500 bg-blue-50"
+        {/* User Icon with Dropdown */}
+        <div
+          className="relative"
+          onMouseEnter={() => setAccountDropdownOpen(true)}
+          onMouseLeave={() => setAccountDropdownOpen(false)}
         >
-          <FiUser className="text-blue-500" />
-          Sign In
-        </Link>
-        <Link
-          to="/signup"
-          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors duration-150"
-        >
-          <FiUser className="text-white" />
-          Sign Up
-        </Link>
+          <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xl transition-colors duration-150">
+            <FiUser />
+          </button>
+          {accountDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+              <Link
+                to="/signin"
+                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors duration-150"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors duration-150"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

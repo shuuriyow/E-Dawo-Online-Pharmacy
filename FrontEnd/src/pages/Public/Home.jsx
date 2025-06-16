@@ -5,6 +5,8 @@ import FeaturedMedicines from '../../components/FeaturedMedicines';
 import PartnerPharmacies from '../../components/PartnerPharmacies';
 import NewsletterPopup from '../../components/NewsletterPopup';
 import HealthCards from '../../components/HealthCards';
+import ServiceHighlights from '../../components/ServiceHighlights';
+
 const Home = () => {
   // The black color you see at the top of the page is not coming from this Home component.
   // It is likely coming from a parent layout or a global style, possibly a header or navigation bar.
@@ -16,6 +18,9 @@ const Home = () => {
     <div className='bg-white'>
       <div style={{ marginTop: '2rem' }}>
         <HeroBanner />
+        <div style={{ marginTop: '4rem' }}>
+          <ServiceHighlights />
+        </div>
       </div>
       <FeaturedCategories />
       <FeaturedMedicines />

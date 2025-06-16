@@ -26,7 +26,7 @@ const HealthCards = () => {
           </div>
           <div className="ml-4 relative">
             <img
-              src="/path-to-your-image.png"
+              src="/HealthCards/diabetes.jpg"
               alt="Diabetes"
               className="w-24 h-24 object-cover rounded-lg"
             />
@@ -50,7 +50,7 @@ const HealthCards = () => {
           </div>
           <div className="ml-4 relative">
             <img
-              src="/path-to-your-image.png"
+              src="/HealthCards/bloodpressure.jpg"
               alt="Blood Pressure"
               className="w-24 h-24 object-cover rounded-lg"
             />

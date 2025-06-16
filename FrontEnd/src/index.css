@@ -1,3 +1,14 @@
 @import "tailwindcss";
 
-
+ /* Add to your CSS file or style section */
+footer {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    background: #1569f7; /* or your footer's blue color */
+    border: none;
+}
+body {
+    margin: 0;
+    padding: 0;
+    background: #1569f7; /* matches footer background */
+}

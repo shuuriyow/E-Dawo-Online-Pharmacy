@@ -10,14 +10,21 @@ import { PharmacyProvider } from '../context/PharmacyContext'; // Adjust the imp
 const PublicLayout = () => {
   return (
     <PharmacyProvider>
-      <div className="bg-gray-50 dark:bg-gray-100 text-gray-800 dark:text-white min-h-screen flex flex-col">
-        <TopHeaderBar />
-        <MiddleHeader />
-        <BottomNav />
-        <main className="flex-1">
+      {/* Fixed headers */}
+      <div className="bg-gray-50 dark:bg-gray-100 text-gray-800 dark:text-white  flex flex-col min-h-screen">
+        <div className="fixed top-0 left-0 w-full z-30">
+          <TopHeaderBar />
+          <MiddleHeader />
+          <BottomNav />
+        </div>
+        {/* Main content with padding to avoid overlap with fixed headers */}
+        <main
+          className="flex-1 pt-[144px] overflow-auto"
+        >
           <Outlet />
         </main>
-        <PublicFooter className="mt-12" />  
+        {/* Footer (not fixed) */}
+        <PublicFooter />
       </div>
     </PharmacyProvider>
   );
